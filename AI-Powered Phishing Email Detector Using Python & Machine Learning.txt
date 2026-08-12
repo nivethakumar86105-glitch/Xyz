@@ -1,0 +1,859 @@
+=======================================================================================================
+				AI-Powered Phishing Email Detector
+=======================================================================================================
+1. Workshop Goal
+=======================================================================================================
+Build a simple AI application to classify an email as:
+
+Email
+  |
+Text Cleaning
+  |
+TF-IDF
+  |
+Machine Learning
+  |
+Prediction
+  |
+SAFE / PHISHING
+=======================================================================================================
+2. Required Software
+=======================================================================================================
+Python 3.11+
+------------
+Download from the official Python website:
+
+[Python Downloads](https://www.python.org/downloads/)
+
+Verify:
+-------
+Powershell
+----------
+python --version
+pip --version
+
+
+VS Code
+-------
+[Visual Studio Code Download](https://code.visualstudio.com/)
+
+
+Install:
+--------
+* Python Extension – Microsoft
+* Pylance – Optional
+=======================================================================================================
+3. Create Project
+=======================================================================================================
+Powershell
+----------
+mkdir AI_Phishing_Detector
+cd AI_Phishing_Detector
+code .
+
+
+Project structure:
+------------------
+
+AI_Phishing_Detector/
+¦
++-- emails.csv
++-- train_model.py
++-- app.py
++-- tkinter_app.py
++-- phishing_model.pkl
++-- tfidf_vectorizer.pkl
++-- requirements.txt
+=======================================================================================================
+4. Virtual Environment
+=======================================================================================================
+Create
+------
+Powershell
+----------
+python -m venv venv
+
+
+Windows Activate
+----------------
+Powershell
+----------
+venv\Scripts\activate
+
+
+macOS/Linux
+-----------
+bash
+----
+source venv/bin/activate
+
+
+You should see:
+---------------
+(venv)
+
+
+VS Code Interpreter
+-------------------
+
+Ctrl + Shift + P
+       |
+Python: Select Interpreter
+       |
+Select venv
+=======================================================================================================
+5. Install Packages
+=======================================================================================================
+Powershell
+----------
+python -m pip install --upgrade pip
+
+
+Powershell
+----------
+pip install pandas scikit-learn joblib streamlit matplotlib
+
+
+Tkinter
+-------
+Tkinter is normally included with standard Python installations and does not require 'pip install'.
+
+Test it:
+
+Powershell
+----------
+python -m tkinter
+
+>If a small Tkinter window opens, it is working.
+=======================================================================================================
+6. Save Packages
+=======================================================================================================
+Powershell
+----------
+pip freeze > requirements.txt
+
+
+Later:
+
+Powershell
+----------
+pip install -r requirements.txt
+=======================================================================================================
+7. Workshop Learning Flow
+=======================================================================================================
+
+1. Understand Phishing
+        |
+2. Python String Handling
+        |
+3. Create Email Dataset
+        |
+4. Pandas
+        |
+5. Text Preprocessing
+        |
+6. Train/Test Split
+        |
+7. TF-IDF
+        |
+8. Logistic Regression
+        |
+9. Prediction
+        |
+10. Model Evaluation
+        |
+11. Save Model
+        |
+12. Load Model
+        |
+13. Tkinter Desktop GUI
+        |
+14. Streamlit Web GUI
+=======================================================================================================
+8. Create Dataset
+=======================================================================================================
+emails.csv
+----------
+csv
+---
+text,label
+"Your monthly bill is ready",safe
+"Your project meeting is tomorrow",safe
+"Your order has been delivered",safe
+"Your appointment is confirmed",safe
+"Urgent verify your account immediately",phishing
+"Your account is suspended click here",phishing
+"Confirm your banking information now",phishing
+"Your password will expire verify immediately",phishing
+=======================================================================================================
+9. Read Dataset
+=======================================================================================================
+python
+------
+import pandas as pd
+
+df = pd.read_csv("emails.csv")
+
+print(df.head())
+
+print(df["label"].value_counts())
+=======================================================================================================
+10. Text Preprocessing
+=======================================================================================================
+python
+------
+import re
+
+def clean_text(text):
+    text = text.lower()
+
+    text = re.sub(r"[^a-zA-Z\s]", " ", text)
+
+    text = re.sub(r"\s+", " ", text)
+
+    return text.strip()
+=======================================================================================================
+11. Train/Test Split
+=======================================================================================================
+python
+------
+from sklearn.model_selection import train_test_split
+
+X = df["text"].apply(clean_text)
+y = df["label"]
+
+X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.25,random_state=42,stratify=y)
+=======================================================================================================
+12. TF-IDF[Term Frequency-Inverse Document Frequency]
+=======================================================================================================
+python
+------
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+vectorizer = TfidfVectorizer(stop_words="english",ngram_range=(1, 2))
+
+X_train_tfidf = vectorizer.fit_transform(X_train)
+
+X_test_tfidf = vectorizer.transform(X_test)
+
+
+Remember
+--------
+Training -> fit_transform()
+Testing  -> transform()
+=======================================================================================================
+13. Train ML Model
+=======================================================================================================
+python
+------
+from sklearn.linear_model import LogisticRegression
+
+model = LogisticRegression(max_iter=1000)
+
+model.fit(X_train_tfidf,y_train)
+
+print("Training completed")
+
+Output
+------
+Training completed
+=======================================================================================================
+14. Evaluate
+=======================================================================================================
+python
+------
+from sklearn.metrics import classification_report
+
+y_pred = model.predict(X_test_tfidf)
+
+print(classification_report(y_test,y_pred,zero_division=0))
+
+
+Learn:
+------
+Accuracy
+Precision
+Recall
+F1-Score
+Confusion Matrix
+=======================================================================================================
+15. Save Model
+=======================================================================================================
+python
+------
+import joblib
+
+joblib.dump(model,"phishing_model.pkl")
+
+joblib.dump(vectorizer,"tfidf_vectorizer.pkl")
+=======================================================================================================
+16. Tkinter Desktop GUI
+=======================================================================================================
+Why Tkinter?
+------------
+
+Tkinter
+   |
+Python Built-in GUI
+   |
+Desktop Application
+
+>It is useful for teaching students how to convert a Python ML program into a simple desktop application.
+=======================================================================================================
+17. Complete Tkinter Application(Desktop)
+=======================================================================================================
+tkinter_app.py
+--------------
+python
+------
+import tkinter as tk
+from tkinter import messagebox
+
+import joblib
+
+
+# Load trained model
+model = joblib.load("phishing_model.pkl")
+
+vectorizer = joblib.load("tfidf_vectorizer.pkl")
+
+
+# -------------------------------
+# Prediction Function
+# -------------------------------
+
+def check_email():
+
+    email = email_box.get("1.0",tk.END).strip()
+
+    if not email:
+
+        messagebox.showwarning("Input Required","Please enter email text.")
+
+        return
+
+
+    # Convert email into TF-IDF
+    email_vector = vectorizer.transform([email])
+
+
+    # Prediction
+    prediction = model.predict(email_vector)[0]
+
+
+    # Display result
+    if prediction == "phishing":
+
+        result_label.config(text="PHISHING EMAIL")
+
+    else:
+
+        result_label.config(text="? EMAIL APPEARS SAFE")
+
+
+# -------------------------------
+# Clear Function
+# -------------------------------
+
+def clear_email():
+
+    email_box.delete("1.0",tk.END)
+
+    result_label.config(text="")
+
+
+# -------------------------------
+# Main Window
+# -------------------------------
+
+root = tk.Tk()
+
+root.title("AI Phishing Email Detector")
+
+root.geometry("650x500")
+
+
+# -------------------------------
+# Heading
+# -------------------------------
+
+title_label = tk.Label(root,text="AI-Powered Phishing Email Detector",font=("Arial", 20, "bold"))
+
+title_label.pack(pady=20)
+
+
+# -------------------------------
+# Input Label
+# -------------------------------
+
+input_label = tk.Label(root,text="Enter Email Text:",font=("Arial", 12))
+
+input_label.pack()
+
+
+# -------------------------------
+# Email Text Box
+# -------------------------------
+
+email_box = tk.Text(root,height=10,width=70)
+
+email_box.pack(pady=10)
+
+
+# -------------------------------
+# Check Button
+# -------------------------------
+
+check_button = tk.Button(root, text="Check Email", command=check_email, font=("Arial", 12))
+
+check_button.pack(pady=5)
+
+
+# -------------------------------
+# Clear Button
+# -------------------------------
+
+clear_button = tk.Button(root, text="Clear", command=clear_email, font=("Arial", 12))
+
+clear_button.pack(pady=5)
+
+
+# -------------------------------
+# Result
+# -------------------------------
+
+result_label = tk.Label(root, text="", font=("Arial", 18, "bold"))
+
+result_label.pack(pady=25)
+
+
+# -------------------------------
+# Start GUI
+# -------------------------------
+
+root.mainloop()
+=======================================================================================================
+18. Run Tkinter Application
+=======================================================================================================
+First train and save the model:
+
+Powershell
+----------
+python train_model.py
+
+
+Then:
+
+Powershell
+----------
+python tkinter_app.py
+=======================================================================================================
+Application Flow
+=======================================================================================================
+
+Tkinter Window
+      |
+Enter Email
+      |
+Click Check Email
+      |
+TF-IDF Vectorizer
+      |
+ML Model
+      |
+Prediction
+      |
++-----------------+
+¦ SAFE            ¦
+¦       OR        ¦
+¦ PHISHING        ¦
++-----------------+
+=======================================================================================================
+19. Tkinter Sample Test
+=======================================================================================================
+Enter:
+------
+Urgent! Your account has been suspended.
+Verify your account immediately.
+
+Result:
+-------
+PHISHING EMAIL
+
+
+Another Test:
+-------------
+The project meeting is scheduled for tomorrow.
+Please review the project report.
+
+Result:
+-------
+EMAIL APPEARS SAFE
+
+
+>Actual predictions depend on the training dataset.
+=======================================================================================================
+20. Streamlit Web GUI
+=======================================================================================================
+Tkinter gives a desktop GUI.
+
+Streamlit gives a web-based GUI.
+
+
+Python ML Model
+       ?
+ +-----------+
+Tkinter   Streamlit
+Desktop      Web
+GUI          UI
+
+
+app.py
+------
+python
+------
+import joblib
+import streamlit as st
+
+
+model = joblib.load("phishing_model.pkl")
+
+vectorizer = joblib.load("tfidf_vectorizer.pkl")
+
+
+st.title("AI Phishing Email Detector")
+
+email = st.text_area("Enter Email Text")
+
+
+if st.button("Check Email"):
+
+    if not email.strip():
+
+        st.warning("Please enter email text.")
+
+    else:
+
+        email_vector = vectorizer.transform([email])
+
+        prediction = model.predict(email_vector)[0]
+
+        if prediction == "phishing":
+
+            st.error("PHISHING EMAIL")
+
+        else:
+
+            st.success("EMAIL APPEARS SAFE")
+
+Run:
+----
+streamlit run app.py
+=======================================================================================================
+21. Final Workshop Architecture
+=======================================================================================================
+
+                    emails.csv
+                        |
+                     Pandas
+                        |
+                Text Preprocessing
+                        |
+                     TF-IDF
+                        |
+               Logistic Regression
+                        |
+                  Model Evaluation
+                        |
+                  Save Model
+                        ?
+                 +-------------+
+             Tkinter       Streamlit
+            Desktop GUI     Web GUI
+                 +-------------+
+                   
+                 User Email
+                        |
+                SAFE / PHISHING
+=======================================================================================================
+Final Technology Stack
+=======================================================================================================
+Python 3.11+
+VS Code
+Virtual Environment
+Pandas
+Scikit-learn
+TF-IDF
+Logistic Regression
+Joblib
+Tkinter
+Streamlit
+Matplotlib (Optional)
+=======================================================================================================
+Student Takeaway
+=======================================================================================================
+Dataset -> Preprocessing -> TF-IDF -> ML Training -> Evaluation -> Save Model -> Tkinter/Streamlit -> Real-Time Prediction.
+=======================================================================================================
+		GitHub Push Procedure – AI Phishing Email Detector
+=======================================================================================================
+1. Install Git
+--------------
+[Download Git](https://git-scm.com/downloads/)
+
+
+Verify:
+
+Powershell
+----------
+git --version
+=======================================================================================================
+2. Create GitHub Account
+=======================================================================================================
+Open:
+
+[GitHub](https://github.com/)
+
+Sign in or create an account.
+=======================================================================================================
+3. Configure Git
+=======================================================================================================
+Open VS Code Terminal:
+
+Powershell
+----------
+git config --global user.name "Your Name"
+git config --global user.email "your-email@example.com"
+
+
+Check:
+
+Powershell
+----------
+git config --list
+=======================================================================================================
+4. Open Project Folder
+=======================================================================================================
+Powershell
+----------
+cd AI_Phishing_Detector
+
+
+Or in VS Code:
+
+File -> Open Folder -> AI_Phishing_Detector
+=======================================================================================================
+5. Create '.gitignore'
+=======================================================================================================
+Inside the project folder, create:
+
+.gitignore
+
+
+Add:
+
+venv/
+__pycache__/
+*.pyc
+.env
+.vscode/
+
+>Do not upload your virtual environment.
+=======================================================================================================
+6. Check Project Files
+=======================================================================================================
+
+AI_Phishing_Detector/
+¦
++-- emails.csv
++-- train_model.py
++-- tkinter_app.py
++-- app.py
++-- requirements.txt
++-- .gitignore
+¦
++-- phishing_model.pkl
++-- tfidf_vectorizer.pkl
+
+>For a workshop project, you can upload the '.pkl' files, but for a larger/production project it is 
+usually better to generate them through the training script rather than store binary model files in 
+Git.
+=======================================================================================================
+7. Initialize Git
+=======================================================================================================
+Powershell
+----------
+git init
+=======================================================================================================
+8. Check Git Status
+=======================================================================================================
+Powershell
+----------
+git status
+=======================================================================================================
+9. Add Project Files
+=======================================================================================================
+Powershell
+----------
+git add .
+
+
+Check:
+
+Powershell
+----------
+git status
+=======================================================================================================
+10. Create First Commit
+=======================================================================================================
+Powershell
+----------
+git commit -m "Initial commit - AI Phishing Email Detector"
+=======================================================================================================
+11. Create GitHub Repository
+=======================================================================================================
+Go to:
+------
+[GitHub New Repository](https://github.com/)
+
+Enter:
+------
+Repository name: AI-Phishing-Email-Detector
+
+
+Select:
+-------
+Public
+
+or:
+
+Private
+
+Do not initialize with:
+-----------------------
+README
+.gitignore
+License
+
+>because you already created these locally.
+
+Click:
+------
+Create repository
+=======================================================================================================
+12. Connect Local Project to GitHub
+=======================================================================================================
+Copy your GitHub repository URL and run:
+
+Powershell
+----------
+git remote add origin https://github.com/YOUR_USERNAME/AI-Phishing-Email-Detector.git
+
+Check:
+------
+Powershell
+----------
+git remote -v
+=======================================================================================================
+13. Rename Main Branch
+=======================================================================================================
+Powershell
+----------
+git branch -M main
+=======================================================================================================
+14. Push Code to GitHub
+=======================================================================================================
+Powershell
+----------
+git push -u origin main
+
+>If GitHub asks you to authenticate, complete the GitHub authentication process.
+=======================================================================================================
+15. Verify
+=======================================================================================================
+Open your GitHub repository in the browser.
+
+You should see:
+
+AI-Phishing-Email-Detector
+¦
++-- emails.csv
++-- train_model.py
++-- tkinter_app.py
++-- app.py
++-- requirements.txt
++-- .gitignore
+=======================================================================================================
+16. Future Code Changes
+=======================================================================================================
+After modifying your Python code:
+
+Powershell
+----------
+git status
+
+Then:
+
+Powershell
+----------
+git add .
+
+
+Commit:
+
+Powershell
+----------
+git commit -m "Updated phishing detector"
+
+Push:
+
+Powershell
+----------
+git push
+=======================================================================================================
+17. Complete Command Sequence
+=======================================================================================================
+For students, the essential workflow is:
+
+Powershell
+----------
+cd AI_Phishing_Detector
+
+git init
+
+git add .
+
+git commit -m "Initial commit"
+
+git branch -M main
+
+git remote add origin https://github.com/YOUR_USERNAME/AI-Phishing-Email-Detector.git
+
+git push -u origin main
+
+
+Future Updates
+--------------
+Powershell
+----------
+git add .
+git commit -m "Updated application"
+git push
+=======================================================================================================
+18. Recommended GitHub Workflow
+=======================================================================================================
+Write Code
+    |
+Test Code
+    |
+git status
+    |
+git add .
+    |
+git commit
+    |
+git push
+    |
+GitHub Repository
+
+Important: Never commit passwords, API keys, access tokens, '.env' secrets, or other sensitive credentials.
+=======================================================================================================
